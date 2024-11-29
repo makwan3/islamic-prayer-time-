@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Islamic Prayer Times</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f1f4f7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        /* Main Container */
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 100%;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #2C3E50;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        #note {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        .select-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 18px;
+            font-weight: 600;
+            color: #34495e;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 12px 18px;
+            font-size: 16px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: #ecf0f1;
+            color: #34495e;
+            outline: none;
+            transition: 0.3s ease-in-out;
+        }
+
+        select:hover, button:hover {
+            background-color: #dfe6e9;
+        }
+
+        button {
+            background-color: #27ae60;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2ecc71;
+        }
+
+        /* Prayer Times Section */
+        .prayer-times {
+            margin-top: 30px;
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+
+        .prayer-times p {
+            font-size: 18px;
+            color: #2C3E50;
+            margin: 5px 0;
+        }
+
+        .prayer-times p strong {
+            font-weight: 600;
+            color: #1abc9c;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            select, button {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="note">This website was created by Makwan</div>
+        <h1 id="pageTitle">Islamic Prayer Times</h1>
+
+        <!-- Country & City Dropdowns -->
+        <div class="select-group">
+            <label for="country">Select your country:</label>
+            <select id="country" onchange="updateCityDropdown()">
+                <option value="Iraq">Iraq</option>
+                <option value="Saudi Arabia">Saudi Arabia</option>
+                <option value="Turkey">Turkey</option>
+                <option value="Palestine">Palestine</option>
+                <option value="Kurdistan">Kurdistan</option>
+            </select>
+        </div>
+
+        <div class="select-group">
+            <label for="city">Select your city:</label>
+            <select id="city">
+                <!-- Cities will be populated based on selected country -->
+            </select>
+        </div>
+
+        <!-- Get Prayer Times Button -->
+        <button onclick="getPrayerTimes()">Get Times</button>
+
+        <!-- Prayer Times Display -->
+        <div class="prayer-times" id="prayerTimes"></div>
+    </div>
+
+    <script>
+        // Populate the city dropdown based on selected country
+        function updateCityDropdown() {
+            const country = document.getElementById("country").value;
+            const cityDropdown = document.getElementById("city");
+            cityDropdown.innerHTML = ''; // Clear the current city options
+
+            let cities = [];
+
+            if (country === "Iraq") {
+                cities = ["Baghdad", "Basra", "Kirkuk"];
+            } else if (country === "Saudi Arabia") {
+                cities = ["Riyadh", "Jeddah", "Mecca"];
+            } else if (country === "Turkey") {
+                cities = ["Istanbul", "Ankara", "Izmir"];
+            } else if (country === "Palestine") {
+                cities = ["Ramallah", "Gaza", "Bethlehem"];
+            } else if (country === "Kurdistan") {
+                cities = ["Erbil", "Sulaymaniyah", "Duhok"];
+            }
+
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                cityDropdown.appendChild(option);
+            });
+        }
+
+        // Fetch prayer times from the API
+        async function getPrayerTimes() {
+            const country = document.getElementById("country").value;
+            const city = document.getElementById("city").value;
+            const date = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+
+            if (!city) {
+                alert("Please select a city!");
+                return;
+            }
+
+            let url = "";
+            if (country === "Kurdistan") {
+                url = `https://api.aladhan.com/v1/timingsByCity?city=${city}&country=Iraq&method=2&date=${date}`; // Using Aladhan API for now
+            } else {
+                url = `https://api.aladhan.com/v1/timingsByCity?city=${city}&country=${country}&method=2&date=${date}`;
+            }
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.code === 200) {
+                const times = data.data.timings;
+                let output = "<h2>Prayer Times</h2>";
+                
+                // Removing unnecessary times for regular prayer times
+                const prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+                prayers.forEach(prayer => {
+                    if (times[prayer]) {
+                        output += `<p><strong>${prayer}:</strong> ${times[prayer]}</p>`;
+                    }
+                });
+
+                document.getElementById("prayerTimes").innerHTML = output;
+            } else {
+                document.getElementById("prayerTimes").innerHTML = "<p>Sorry, no data available for this city.</p>";
+            }
+        }
+
+        // Call the function to populate the city dropdown initially
+        updateCityDropdown();
+    </script>
+
+</body>
+</html>
